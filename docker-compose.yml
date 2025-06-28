@@ -1,0 +1,45 @@
+services:
+  # Сервис приложения
+  app:
+    build:
+      context: .  # Собирает образ из Dockerfile в текущей директории
+    container_name: world-countries-app  # Имя контейнера
+    volumes:
+      - ./app:/var/www/app  # Монтирует папку ./app в контейнер по пути /var/www/app
+    working_dir: /var/www/app  # Рабочая директория внутри контейнера
+    environment:
+      - DB_HOST=${DB_HOST}  # Хост БД (берётся из переменных окружения)
+      - DB_PORT=${DB_PORT}  # Порт БД
+      # - DB_USERNAME=${DB_USERNAME}  # Пользователь БД
+      # - DB_PASSWORD=${DB_PASSWORD}  # Пароль БД
+      - DB_NAME=${DB_NAME}  # Имя БД
+      - USER_NAME=${USER_NAME}
+      - USER_PASSWORD=${USER_PASSWORD}
+    ports:
+      - "9000:9000"  # Пробрасывает порт 9000 контейнера на порт 9000 хоста
+
+  # Сервис базы данных MySQL
+  db:
+    container_name: world-countries-db  # Имя контейнера
+    image: mysql:latest  # Использует официальный образ MySQL
+    ports:
+      - "3307:3306"  # Пробрасывает порт 3306 контейнера на порт 3307 хоста
+    environment:
+      - MYSQL_ROOT_PASSWORD={DB_PASSWORD}  # Пароль root-пользователя (фигурные скобки - вероятно опечатка, должны быть ${DB_PASSWORD})
+      - MYSQL_DATABASE=${DB_NAME}  # Создаёт БД при старте
+      - MYSQL_USER=${USER_NAME}
+      - MYSQL_PASSWORD=${USER_PASSWORD}
+    volumes:
+      - ./mysql/init:/docker-entrypoint-initdb.d  # Монтирует SQL-скрипты для инициализации БД
+
+  # Сервис веб-сервера Nginx
+  nginx:
+    image: nginx:latest  # Использует официальный образ Nginx
+    container_name: world-countries-server  # Имя контейнера
+    volumes:
+      - ./app:/var/www/app  # Монтирует папку с приложением
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf  # Монтирует конфиг Nginx
+    ports:
+      - "8080:80"  # Пробрасывает порт 80 контейнера на порт 8080 хоста
+    depends_on:
+      - app  # Запускается только после запуска сервиса app

@@ -1,0 +1,292 @@
+openapi: 3.1.0
+info:
+  title: Справочник стран мира API
+  version: 1.0.0
+  description: API для работы с веб-приложенем "Справочник стран мира"
+  # contact:
+  #   email: support@api.com
+  # license:
+  #   name: MIT
+  #   url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Локальная среда разработки
+  # - url: https://api.example.com
+  #   description: Продакшен сервер
+
+tags:
+  - name: Status
+    description: Проверка состояния сервера
+  - name: Ping
+    description: Проверка доступности API
+  - name: Countries
+    description: Управление данными стран
+
+paths:
+  /:
+    get:
+      tags:
+        - Status
+      summary: Проверка статуса сервера
+      description: Возвращает текущее состояние сервера
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /ping:
+    get:
+      tags:
+        - Ping
+      summary: Ping endpoint
+      description: Простая проверка доступности API
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+
+  /api/country:
+    get:
+      tags:
+        - Countries
+      summary: Получить список всех стран
+      responses:
+        '200':
+          description: Список стран
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Country'
+    
+    post:
+      tags:
+        - Countries
+      summary: Добавить новую страну
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Country'
+      responses:
+        '200':
+          description: Страна успешно добавлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Country'
+        '400':
+          description: Неверный код страны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Код страны уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/country/{code}:
+    get:
+      tags:
+        - Countries
+      summary: Получить страну по коду
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Код страны (ISO Alpha-2)
+      responses:
+        '200':
+          description: Данные страны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Country'
+        '400':
+          description: Неверный код страны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Страна не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    patch:
+      tags:
+        - Countries
+      summary: Обновить данные страны
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Код страны (ISO Alpha-2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Country'
+      responses:
+        '200':
+          description: Данные страны успешно обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Country'
+        '404':
+          description: Страна не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - Countries
+      summary: Удалить страну
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Код страны (ISO Alpha-2)
+      responses:
+        '204':
+          description: Страна успешно удалена
+        '404':
+          description: Страна не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "server is running"
+          description: Статус сервера
+        host:
+          type: string
+          example: "localhost"
+          description: Хост сервера
+        protocol:
+          type: string
+          example: "http"
+          description: Используемый протокол
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-05-15T12:00:00+00:00"
+          description: Временная метка ответа
+      required:
+        - status
+        - host
+        - protocol
+        - timestamp
+
+    PingResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "pong"
+          description: Ответное сообщение
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-05-15T12:00:00+00:00"
+          description: Временная метка ответа
+      required:
+        - message
+        - timestamp
+
+    Country:
+      type: object
+      properties:
+        shortName:
+          type: string
+          example: "Dreamland"
+          description: Short name of the country
+        fullName:
+          type: string
+          example: "SuperDuper Dreamland"
+          description: Full official name of the country
+        isoAlpha2:
+          type: string
+          example: "DL"
+          description: alpha-2 country code
+          maxLength: 2
+          minLength: 2
+        isoAlpha3:
+          type: string
+          example: "SDL"
+          description: alpha-3 country code
+          maxLength: 3
+          minLength: 3
+        isoNumeric:
+          type: integer
+          example: 888
+          description: numeric country code
+        population:
+          type: integer
+          example: 100500
+          description: Country population
+        square:
+          type: number
+          format: float
+          example: 100500.1005
+          description: Country area in square kilometers
+      required:
+        - shortName
+        - fullName
+        - isoAlpha2
+        - isoAlpha3
+        - isoNumeric
+        - population
+        - square
+
+    Error:
+      type: object
+      properties:
+        errorCode:
+          type: integer
+          example: 404
+          description: HTTP status code
+        errorMessage:
+          type: string
+          example: "Country not found"
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-05-15T12:00:00+00:00"
+          description: Временная метка ошибки
+      required:
+        - errorCode
+        - errorMessage
+        - timestamp
